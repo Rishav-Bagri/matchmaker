@@ -1,0 +1,191 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model Profile {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  // Identity
+  firstName             String
+  lastName              String
+
+  gender                Gender
+  dateOfBirth           DateTime
+
+  email                 String   @unique
+  phoneNumber           String   @unique
+
+  nationality           String
+  country               String
+  city                  String
+
+  motherTongue          String
+
+  religion              String
+  caste                 String?
+
+  // Physical
+  heightCm              Int
+  weightKg              Int?
+
+  // Education
+  collegeName           String
+  degree                String
+  highestQualification  String
+
+  // Career
+  currentCompany        String
+  designation           String
+  annualIncome          Float?
+
+  // Family
+  brothers              Int       @default(0)
+  sisters               Int       @default(0)
+
+  maritalStatus         MaritalStatus
+  haveChildren          Boolean    @default(false)
+
+  // Lifestyle
+  foodPreference        FoodPreference
+
+  smoking               HabitFrequency
+  drinking              HabitFrequency
+
+  lifestyle             String?
+
+  hobbies               String[]
+
+  personalityType       PersonalityType
+
+  // Matchmaking
+  manglikStatus         ManglikStatus
+  horoscopeAvailable    Boolean     @default(false)
+
+  disabilityStatus      String?
+
+  // Future Plans
+  wantKids              PreferenceChoice
+
+  openToRelocate        PreferenceChoice
+
+  openToPets            PreferenceChoice
+
+  wantToWorkAfterMarriage PreferenceChoice
+
+  // Languages
+  languagesKnown        String[]
+
+  // Embedding Fields
+  aboutMe               String
+
+  familyValues          String?
+
+  careerGoals           String?
+
+  relationshipValues    String?
+
+  futurePlans           String?
+
+  lookingFor            String
+
+  partnerExpectations   String?
+
+  // Misc
+  additionalInfo        String?
+
+  // Media
+  profilePictures       String[]
+
+  isVerified            Boolean @default(false)
+
+  // Embedding
+  embedding             Unsupported("vector")?
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  partnerPreference     PartnerPreference?
+}
+
+model PartnerPreference {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  profileId String @unique @db.ObjectId
+  profile Profile @relation(fields: [profileId], references: [id])
+
+  // Hard Filters
+
+  minAge Int?
+  maxAge Int?
+
+  minHeightCm Int?
+  maxHeightCm Int?
+
+  religion String?
+  caste String?
+
+  smoking HabitFrequency?
+  drinking HabitFrequency?
+
+  maritalStatus MaritalStatus?
+
+  foodPreference FoodPreference?
+
+  city String?
+
+  degree String?
+
+  minIncome Float?
+
+  // Soft Filters
+
+  partnerDescription String?
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum MaritalStatus {
+  NEVER_MARRIED
+  DIVORCED
+  WIDOWED
+}
+
+enum HabitFrequency {
+  NO
+  OCCASIONALLY
+  YES
+}
+
+enum PreferenceChoice {
+  YES
+  NO
+  MAYBE
+}
+
+enum PersonalityType {
+  INTROVERT
+  AMBIVERT
+  EXTROVERT
+}
+
+enum FoodPreference {
+  VEG
+  EGGETARIAN
+  NON_VEG
+  JAIN
+}
+
+enum ManglikStatus {
+  YES
+  NO
+  UNKNOWN
+}
