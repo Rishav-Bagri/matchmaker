@@ -145,6 +145,10 @@ model PartnerPreference {
 
   // Soft Filters
 
+  wantKids              PreferenceChoice?
+  openToRelocate        PreferenceChoice?
+  openToPets            PreferenceChoice?
+
   partnerDescription String?
 }
 
