@@ -136,6 +136,13 @@ export const ProfileSchema = z.object({
     "MAYBE"
   ]),
 
+  kidsCountPreference: z.enum([
+    "ONE",
+    "TWO_TO_THREE",
+    "THREE_OR_MORE",
+    "OPEN"
+  ]).optional().nullable(),
+
   openToRelocate: z.enum([
     "YES",
     "NO",

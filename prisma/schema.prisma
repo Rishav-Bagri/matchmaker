@@ -70,6 +70,7 @@ model Profile {
 
   // Future Plans
   wantKids              PreferenceChoice
+  kidsCountPreference   KidsCountPreference?
 
   openToRelocate        PreferenceChoice
 
@@ -188,4 +189,11 @@ enum ManglikStatus {
   YES
   NO
   UNKNOWN
+}
+
+enum KidsCountPreference {
+  ONE
+  TWO_TO_THREE
+  THREE_OR_MORE
+  OPEN
 }

@@ -9,6 +9,5 @@
 TODO-
 
 
-DB change to no of kids in future, 
 
 add partners prefered to the page
