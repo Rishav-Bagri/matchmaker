@@ -9,115 +9,118 @@ datasource db {
 }
 
 model Profile {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
   // Identity
-  firstName             String
-  lastName              String
+  firstName String
+  lastName  String
 
-  gender                Gender
-  dateOfBirth           DateTime
+  gender      Gender
+  dateOfBirth DateTime
 
-  email                 String   @unique
-  phoneNumber           String   @unique
+  email       String @unique
+  phoneNumber String @unique
 
-  nationality           String
-  country               String
-  city                  String
+  nationality String
+  country     String
+  city        String
 
-  motherTongue          String
+  motherTongue String
 
-  religion              String
-  caste                 String?
+  religion String
+  caste    String?
 
   // Physical
-  heightCm              Int
-  weightKg              Int?
+  heightCm Int
+  weightKg Int?
 
   // Education
-  collegeName           String
-  degree                String
-  highestQualification  String
+  collegeName          String
+  degree               String
+  highestQualification String
 
   // Career
-  currentCompany        String
-  designation           String
-  annualIncome          Float?
+  currentCompany String
+  designation    String
+  annualIncome   Float?
 
   // Family
-  brothers              Int       @default(0)
-  sisters               Int       @default(0)
+  brothers Int @default(0)
+  sisters  Int @default(0)
 
-  maritalStatus         MaritalStatus
-  haveChildren          Boolean    @default(false)
+  maritalStatus MaritalStatus
+  haveChildren  Boolean       @default(false)
 
   // Lifestyle
-  foodPreference        FoodPreference
+  foodPreference FoodPreference
 
-  smoking               HabitFrequency
-  drinking              HabitFrequency
+  smoking  HabitFrequency
+  drinking HabitFrequency
 
-  lifestyle             String?
+  lifestyle String?
 
-  hobbies               String[]
+  hobbies String[]
 
-  personalityType       PersonalityType
+  personalityType PersonalityType
 
   // Matchmaking
-  manglikStatus         ManglikStatus
-  horoscopeAvailable    Boolean     @default(false)
+  manglikStatus      ManglikStatus
+  horoscopeAvailable Boolean       @default(false)
 
-  disabilityStatus      String?
+  disabilityStatus String?
 
   // Future Plans
-  wantKids              PreferenceChoice
-  kidsCountPreference   KidsCountPreference?
+  wantKids            PreferenceChoice
+  kidsCountPreference KidsCountPreference?
 
-  openToRelocate        PreferenceChoice
+  openToRelocate PreferenceChoice
 
-  openToPets            PreferenceChoice
+  openToPets PreferenceChoice
 
   wantToWorkAfterMarriage PreferenceChoice
 
   // Languages
-  languagesKnown        String[]
+  languagesKnown String[]
 
   // Embedding Fields
-  aboutMe               String
+  aboutMe String
 
-  familyValues          String?
+  familyValues String?
 
-  careerGoals           String?
+  careerGoals String?
 
-  relationshipValues    String?
+  relationshipValues String?
 
-  futurePlans           String?
+  futurePlans String?
 
-  lookingFor            String
+  lookingFor String
 
-  partnerExpectations   String?
+  partnerExpectations String?
 
   // Misc
-  additionalInfo        String?
+  additionalInfo String?
 
   // Media
-  profilePictures       String[]
+  profilePictures String[]
 
-  isVerified            Boolean @default(false)
+  isVerified Boolean @default(false)
 
   // Embedding
-  embedding             Unsupported("vector")?
+  embedding Unsupported("vector")?
 
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  partnerPreference     PartnerPreference?
+  partnerPreference PartnerPreference?
+  journey           CustomerJourney?
+  matches           Match[]            @relation("ProfileMatches")
+  matchedBy         Match[]            @relation("MatchedProfileMatches")
 }
 
 model PartnerPreference {
   id String @id @default(auto()) @map("_id") @db.ObjectId
 
-  profileId String @unique @db.ObjectId
-  profile Profile @relation(fields: [profileId], references: [id])
+  profileId String  @unique @db.ObjectId
+  profile   Profile @relation(fields: [profileId], references: [id])
 
   // Hard Filters
 
@@ -128,9 +131,9 @@ model PartnerPreference {
   maxHeightCm Int?
 
   religion String?
-  caste String?
+  caste    String?
 
-  smoking HabitFrequency?
+  smoking  HabitFrequency?
   drinking HabitFrequency?
 
   maritalStatus MaritalStatus?
@@ -145,9 +148,9 @@ model PartnerPreference {
 
   // Soft Filters
 
-  wantKids              PreferenceChoice?
-  openToRelocate        PreferenceChoice?
-  openToPets            PreferenceChoice?
+  wantKids       PreferenceChoice?
+  openToRelocate PreferenceChoice?
+  openToPets     PreferenceChoice?
 
   partnerDescription String?
 }
@@ -200,4 +203,70 @@ enum KidsCountPreference {
   TWO_TO_THREE
   THREE_OR_MORE
   OPEN
+}
+
+model CustomerJourney {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  userId String @unique @db.ObjectId
+
+  user Profile @relation(fields: [userId], references: [id])
+
+  status JourneyStatus @default(NEW)
+
+  assignedTo String?
+
+  lastContactAt DateTime?
+
+  createdAt DateTime @default(now())
+}
+
+enum JourneyStatus {
+  NEW
+  PROFILE_REVIEW
+  MATCHING
+  MATCH_SENT
+  MEETING_SCHEDULED
+  IN_DISCUSSION
+  CLOSED
+}
+
+model Match {
+  id               String      @id @default(auto()) @map("_id") @db.ObjectId
+  profileId        String      @db.ObjectId
+  profile          Profile     @relation("ProfileMatches", fields: [profileId], references: [id], onDelete: Cascade)
+  matchedProfileId String      @db.ObjectId
+  matchedProfile   Profile     @relation("MatchedProfileMatches", fields: [matchedProfileId], references: [id], onDelete: Cascade)
+  status           MatchStatus @default(PROPOSED)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  dates            DateRecord[]
+
+  @@unique([profileId, matchedProfileId])
+}
+
+model DateRecord {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  matchId         String      @db.ObjectId
+  match           Match       @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  dateScheduledAt DateTime
+  status          DateStatus  @default(SCHEDULED)
+  notes           String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+enum MatchStatus {
+  PROPOSED
+  INTEREST_EXPRESSED
+  ACCEPTED
+  DECLINED
+  ON_HOLD
+  DISCONNECTED
+}
+
+enum DateStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
 }
