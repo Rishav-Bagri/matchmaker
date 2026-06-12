@@ -82,6 +82,11 @@ export default function MatchmakingWorkspace({
   const [editNotesText, setEditNotesText] = useState<string>("");
   const [editDateStatus, setEditDateStatus] = useState<DateStatus>("COMPLETED");
 
+  // AI Matchmaker States
+  const [aiMatches, setAiMatches] = useState<any[]>([]);
+  const [hasRunAi, setHasRunAi] = useState<boolean>(false);
+  const [aiLoading, setAiLoading] = useState<boolean>(false);
+
   const showNotification = (success: boolean, msg: string) => {
     if (success) {
       setSuccessMsg(msg);
@@ -91,6 +96,40 @@ export default function MatchmakingWorkspace({
       setErrorMsg(msg);
       setSuccessMsg(null);
       setTimeout(() => setErrorMsg(null), 6000);
+    }
+  };
+
+  const handleRunAiMatchmaker = async () => {
+    setAiLoading(true);
+    setHasRunAi(false);
+    try {
+      const res = await fetch(`/api/customers/${profileId}/matches`);
+      const data = await res.json();
+      if (data.success) {
+        setAiMatches(data.matches || []);
+        setHasRunAi(true);
+        showNotification(true, "AI matchmaking completed! Scroll down to see candidate suggestions.");
+      } else {
+        showNotification(false, data.error || "Failed to fetch AI matches");
+      }
+    } catch (err) {
+      console.error(err);
+      showNotification(false, "An error occurred while running AI Matchmaker.");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const handleProposeAiCandidate = async (candidateId: string) => {
+    setLoading(`propose-${candidateId}`);
+    const res = await proposeMatch(profileId, candidateId);
+    setLoading(null);
+    if (res.success) {
+      showNotification(true, "Successfully proposed connection!");
+      setAiMatches((prev) => prev.filter((m) => m.profile.id !== candidateId));
+      window.location.reload();
+    } else {
+      showNotification(false, res.error || "Failed to propose connection");
     }
   };
 
@@ -282,18 +321,95 @@ TDC Matchmaking Team`;
         </div>
       </div>
 
-      {/* AI Matchmaker Future Integration Box */}
-      <div className="bg-white border border-[#E5E2DA] p-6 flex flex-col sm:flex-row justify-between items-center gap-4">
-        <div>
-          <h4 className="font-luxury-serif text-lg text-zinc-900 font-medium">✨ AI Matchmaker Suite</h4>
-          <p className="text-[11px] text-zinc-500 mt-1">Automatically scan preferred profile criteria using deep reasoning models.</p>
+      {/* AI Matchmaker Suite */}
+      <div className="bg-white border border-[#E5E2DA] p-6 space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h4 className="font-luxury-serif text-xl text-zinc-900 font-medium">✨ AI Matchmaker Suite</h4>
+            <p className="text-[11px] text-zinc-500 mt-1">
+              Automatically scan preferred profile criteria using deep reasoning models and hybrid vector embeddings.
+            </p>
+          </div>
+          <button
+            onClick={handleRunAiMatchmaker}
+            disabled={aiLoading}
+            className="px-5 py-2.5 bg-zinc-950 text-white border border-zinc-950 text-[10px] uppercase tracking-[0.2em] font-semibold hover:bg-zinc-800 disabled:opacity-50 transition-all rounded-none cursor-pointer"
+          >
+            {aiLoading ? "Analyzing Candidate Pool..." : "Run AI Matchmaker"}
+          </button>
         </div>
-        <button
-          onClick={() => showNotification(true, "AI Matching Engine integration is scheduled for Phase 2. Utilizing manual matchmaking tools for now.")}
-          className="px-4 py-2 border border-zinc-950 text-zinc-955 text-[10px] uppercase tracking-[0.2em] font-semibold hover:bg-zinc-950 hover:text-white transition-all rounded-none cursor-pointer"
-        >
-          Run AI Matchmaker
-        </button>
+
+        {/* AI Recommendations Results */}
+        {hasRunAi && (
+          <div className="border-t border-[#E5E2DA] pt-6 space-y-4">
+            <h5 className="text-xs uppercase tracking-[0.2em] text-zinc-900 font-semibold">
+              Top 5 Match Recommendations
+            </h5>
+            {aiMatches.length === 0 ? (
+              <p className="text-xs text-zinc-500 italic">No candidates met the minimum recommendation threshold.</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {aiMatches.map((m) => {
+                  const candidate = m.profile;
+                  const scorePercent = Math.round(m.score * 100);
+                  
+                  // Calculate candidate age
+                  const birthDate = new Date(candidate.dateOfBirth);
+                  const today = new Date();
+                  let age = today.getFullYear() - birthDate.getFullYear();
+                  const monthDiff = today.getMonth() - birthDate.getMonth();
+                  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                    age--;
+                  }
+
+                  const isProposing = loading === `propose-${candidate.id}`;
+
+                  return (
+                    <div key={candidate.id} className="border border-[#E5E2DA] p-4 bg-[#FBFBFA] flex flex-col justify-between hover:shadow-md transition-shadow">
+                      <div>
+                        <div className="flex justify-between items-start gap-2">
+                          <h6 className="font-luxury-serif text-lg text-zinc-900 font-semibold">
+                            {candidate.firstName} {candidate.lastName}
+                          </h6>
+                          <span className="bg-zinc-900 text-white text-[9px] uppercase tracking-wider px-2 py-0.5 font-bold">
+                            {scorePercent}% Match
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-zinc-500 mt-1 uppercase tracking-wider">
+                          {candidate.gender === "MALE" ? "M" : "F"} • {age} Yrs • {candidate.city}
+                        </p>
+                        <p className="text-xs text-zinc-700 mt-2 line-clamp-2">
+                          {candidate.designation} at {candidate.currentCompany}
+                        </p>
+                        <p className="text-[10px] text-zinc-400 mt-1">
+                          Status: {candidate.maritalStatus.replaceAll("_", " ")}
+                        </p>
+                      </div>
+
+                      <div className="mt-4 pt-3 border-t border-[#E5E2DA]/60 flex justify-between gap-2">
+                        <a 
+                          href={`/profile?id=${candidate.id}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-center flex-1 text-[9px] uppercase tracking-wider text-zinc-500 hover:text-zinc-900 border border-[#E5E2DA] py-2 hover:border-zinc-900 transition-colors"
+                        >
+                          View Bio ↗
+                        </a>
+                        <button
+                          onClick={() => handleProposeAiCandidate(candidate.id)}
+                          disabled={isProposing}
+                          className="text-center flex-1 text-[9px] uppercase tracking-wider bg-zinc-900 text-white py-2 hover:bg-zinc-800 disabled:opacity-50 transition-colors font-semibold rounded-none cursor-pointer"
+                        >
+                          {isProposing ? "Proposing..." : "Propose Match"}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Propose Connection Bar */}

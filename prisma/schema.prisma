@@ -105,7 +105,7 @@ model Profile {
   isVerified Boolean @default(false)
 
   // Embedding
-  embedding Unsupported("vector")?
+  embedding Float[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
