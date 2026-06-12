@@ -110,7 +110,7 @@ export default async function LoginPage({
 
         <div className="border-t border-[#E5E2DA] pt-6 text-center">
           <p className="text-[9px] uppercase tracking-[0.2em] text-zinc-400">
-            Credentials: admin / password123
+            Demo Credentials: admin / password123
           </p>
         </div>
       </div>
